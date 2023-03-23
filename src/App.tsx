@@ -4,7 +4,12 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import { API } from 'aws-amplify';
-import { Button, View, Heading, Authenticator } from '@aws-amplify/ui-react';
+import {
+	Button,
+	View,
+	Heading,
+	withAuthenticator,
+} from '@aws-amplify/ui-react';
 import { listTodos } from './graphql/queries';
 import {
 	createTodo as createTodoMutation,
@@ -14,17 +19,18 @@ import {
 import TodoList from './components/TodoList/TodoList';
 import TodoForm from './components/TodoForm/TodoForm';
 
-const App = () => {
+const App = ({ signOut, user }) => {
 	const [todos, setTodos] = useState([]);
 	const [isEditing, setIsEditing] = useState(false);
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
 	});
+	const { sub } = user.attributes;
 
 	useEffect(() => {
 		fetchTodos();
-	}, []);
+	}, [sub]);
 
 	const handleOnChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,7 +46,7 @@ const App = () => {
 	const fetchTodos = async () => {
 		const apiData = await API.graphql({
 			query: listTodos,
-			authMode: "AMAZON_COGNITO_USER_POOLS"
+			authMode: 'AMAZON_COGNITO_USER_POOLS',
 		});
 		const todosFromAPI = apiData.data.listTodos.items;
 		setTodos(todosFromAPI);
@@ -97,27 +103,23 @@ const App = () => {
 	};
 
 	return (
-		<Authenticator>
-			{({ signOut, user }) => (
-				<View className='App'>
-					<Heading level={1}>{`${user.username}'s Todo App`}</Heading>
-					<TodoForm
-						formData={formData}
-						createTodo={createTodo}
-						updateTodo={updateTodo}
-						isEditing={isEditing}
-						handleOnChange={handleOnChange}
-					/>
-					<TodoList
-						todos={todos}
-						deleteTodo={deleteTodo}
-						editTodo={editTodo}
-					/>
-					<Button onClick={signOut}>Sign Out</Button>
-				</View>
-			)}
-		</Authenticator>
+		<View className='App'>
+			<Heading level={1}>{`${user.username}'s Todo App`}</Heading>
+			<TodoForm
+				formData={formData}
+				createTodo={createTodo}
+				updateTodo={updateTodo}
+				isEditing={isEditing}
+				handleOnChange={handleOnChange}
+			/>
+			<TodoList
+				todos={todos}
+				deleteTodo={deleteTodo}
+				editTodo={editTodo}
+			/>
+			<Button onClick={signOut}>Sign Out</Button>
+		</View>
 	);
 };
 
-export default App;
+export default withAuthenticator(App);
