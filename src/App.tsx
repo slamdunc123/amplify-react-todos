@@ -44,22 +44,30 @@ const App = ({ signOut, user }) => {
 	};
 
 	const fetchTodos = async () => {
-		const apiData = await API.graphql({
-			query: listTodos,
-			authMode: 'AMAZON_COGNITO_USER_POOLS',
-		});
-		const todosFromAPI = apiData.data.listTodos.items;
-		setTodos(todosFromAPI);
+		try {
+			const apiData = await API.graphql({
+				query: listTodos,
+				// authMode: 'AMAZON_COGNITO_USER_POOLS',
+			});
+			const todosFromAPI = apiData.data.listTodos.items;
+			setTodos(todosFromAPI);
+		} catch (error) {
+			console.log(error);
+		}
 	};
 
 	const createTodo = async (e) => {
 		e.preventDefault();
-		await API.graphql({
-			query: createTodoMutation,
-			variables: { input: formData },
-			authMode: 'AMAZON_COGNITO_USER_POOLS',
-		});
-		fetchTodos();
+		try {
+			await API.graphql({
+				query: createTodoMutation,
+				variables: { input: formData },
+				authMode: 'AMAZON_COGNITO_USER_POOLS',
+			});
+			fetchTodos();
+		} catch (error) {
+			console.log(error);
+		}
 		resetFormData();
 	};
 
@@ -74,37 +82,46 @@ const App = ({ signOut, user }) => {
 
 	const updateTodo = async (e) => {
 		e.preventDefault();
-		await API.graphql({
-			query: updateTodoMutation,
-			variables: {
-				input: {
-					id: formData.id,
-					name: formData.name,
-					description: formData.description,
+		try {
+			await API.graphql({
+				query: updateTodoMutation,
+				variables: {
+					input: {
+						id: formData.id,
+						name: formData.name,
+						description: formData.description,
+					},
 				},
-			},
-			authMode: 'AMAZON_COGNITO_USER_POOLS',
-		});
-		fetchTodos();
+				authMode: 'AMAZON_COGNITO_USER_POOLS',
+			});
+			fetchTodos();
+		} catch (error) {
+			console.log(error);
+		}
 		resetFormData();
 		setIsEditing(false);
 	};
 
 	const deleteTodo = async ({ id }) => {
-		const newtodos = todos.filter((todo) => todo.id !== id);
-		setTodos(newtodos);
-		await API.graphql({
-			query: deleteTodoMutation,
-			variables: { input: { id } },
-			authMode: 'AMAZON_COGNITO_USER_POOLS',
-		});
+		try {
+			await API.graphql({
+				query: deleteTodoMutation,
+				variables: { input: { id } },
+				authMode: 'AMAZON_COGNITO_USER_POOLS',
+			});
+			const newtodos = todos.filter((todo) => todo.id !== id);
+			setTodos(newtodos);
+		} catch (error) {
+			console.log(error);
+		}
 		resetFormData();
 		setIsEditing(false);
 	};
 
 	return (
 		<View className='App'>
-			<Heading level={1}>{`${user.username}'s Todo App`}</Heading>
+			<Heading level={1}>Todo App</Heading>
+			<Heading level={5}>{user.username}</Heading>
 			<TodoForm
 				formData={formData}
 				createTodo={createTodo}
@@ -116,6 +133,7 @@ const App = ({ signOut, user }) => {
 				todos={todos}
 				deleteTodo={deleteTodo}
 				editTodo={editTodo}
+				username={user.username}
 			/>
 			<Button onClick={signOut}>Sign Out</Button>
 		</View>
