@@ -24,7 +24,7 @@ const TodoList = ({ todos, deleteTodo, editTodo }) => {
 						>
 							Delete Todo
 						</Button>
-						<Button onClick={() => editTodo(todo)}>
+						<Button variation='link' onClick={() => editTodo(todo)}>
 							Edit Todo
 						</Button>
 					</Flex>
