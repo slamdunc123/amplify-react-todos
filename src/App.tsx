@@ -1,9 +1,9 @@
 // @ts-nocheck
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
-import { API } from 'aws-amplify';
+import { API, Storage } from 'aws-amplify';
 import {
 	Button,
 	View,
@@ -25,7 +25,9 @@ const App = ({ signOut, user }) => {
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
+		image: '',
 	});
+	const imageInputRef = useRef();
 	const { sub } = user.attributes;
 
 	useEffect(() => {
@@ -40,6 +42,7 @@ const App = ({ signOut, user }) => {
 		setFormData({
 			name: '',
 			description: '',
+			image: '',
 		});
 	};
 
@@ -50,6 +53,15 @@ const App = ({ signOut, user }) => {
 				// authMode: 'AMAZON_COGNITO_USER_POOLS',
 			});
 			const todosFromAPI = apiData.data.listTodos.items;
+			await Promise.all(
+				todosFromAPI.map(async (todo) => {
+					if (todo.image) {
+						const url = await Storage.get(todo.name);
+						todo.image = url;
+					}
+					return todo;
+				})
+			);
 			setTodos(todosFromAPI);
 		} catch (error) {
 			console.log(error);
@@ -58,13 +70,25 @@ const App = ({ signOut, user }) => {
 
 	const createTodo = async (e) => {
 		e.preventDefault();
+
+		const form = new FormData(e.target);
+		const image = form.get('image');
+		const data = {
+			name: form.get('name'),
+			description: form.get('description'),
+			image: image.name,
+		};
 		try {
+			if (!!data.image) {
+				await Storage.put(data.name, image);
+			}
 			await API.graphql({
 				query: createTodoMutation,
-				variables: { input: formData },
+				variables: { input: data },
 				authMode: 'AMAZON_COGNITO_USER_POOLS',
 			});
 			fetchTodos();
+			e.target.reset();
 		} catch (error) {
 			console.log(error);
 		}
@@ -72,29 +96,37 @@ const App = ({ signOut, user }) => {
 	};
 
 	const editTodo = (todo) => {
+    imageInputRef.current.value = '';
 		setFormData({
 			id: todo.id,
 			name: todo.name,
 			description: todo.description,
+			image: todo.image,
 		});
 		setIsEditing(true);
 	};
 
 	const updateTodo = async (e) => {
 		e.preventDefault();
+
+		const form = new FormData(e.target);
+		const image = form.get('image');
+		const data = {
+			id: formData.id,
+			name: form.get('name'),
+			description: form.get('description'),
+			image: image.name,
+		};
+
 		try {
+			if (!!data.image) await Storage.put(data.name, image);
 			await API.graphql({
 				query: updateTodoMutation,
-				variables: {
-					input: {
-						id: formData.id,
-						name: formData.name,
-						description: formData.description,
-					},
-				},
+				variables: { input: data },
 				authMode: 'AMAZON_COGNITO_USER_POOLS',
 			});
 			fetchTodos();
+			e.target.reset();
 		} catch (error) {
 			console.log(error);
 		}
@@ -102,8 +134,9 @@ const App = ({ signOut, user }) => {
 		setIsEditing(false);
 	};
 
-	const deleteTodo = async ({ id }) => {
+	const deleteTodo = async ({ id, name }) => {
 		try {
+			await Storage.remove(name);
 			await API.graphql({
 				query: deleteTodoMutation,
 				variables: { input: { id } },
@@ -128,6 +161,7 @@ const App = ({ signOut, user }) => {
 				updateTodo={updateTodo}
 				isEditing={isEditing}
 				handleOnChange={handleOnChange}
+				imageInputRef={imageInputRef}
 			/>
 			<TodoList
 				todos={todos}

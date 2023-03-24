@@ -7,4 +7,5 @@ type Todo
 	id: ID!
 	name: String!
 	description: String
+  image: String
 }

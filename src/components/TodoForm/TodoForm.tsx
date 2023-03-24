@@ -1,6 +1,12 @@
 // @ts-nocheck
 
-import { Button, Flex, Heading, TextField, View } from '@aws-amplify/ui-react';
+import {
+	Button,
+	Flex,
+	Heading,
+	TextField,
+	View,
+} from '@aws-amplify/ui-react';
 
 const TodoForm = ({
 	formData,
@@ -8,6 +14,7 @@ const TodoForm = ({
 	updateTodo,
 	isEditing,
 	handleOnChange,
+  imageInputRef
 }) => {
 	return (
 		<>
@@ -37,6 +44,13 @@ const TodoForm = ({
 						value={formData.description}
 						onChange={handleOnChange}
 						required
+					/>
+					<View
+						name='image'
+						as='input'
+						type='file'
+						style={{ alignSelf: 'end' }}
+            ref={imageInputRef}
 					/>
 					<Button type='submit' variation='primary'>
 						{isEditing ? 'Update Todo' : 'Create Todo'}

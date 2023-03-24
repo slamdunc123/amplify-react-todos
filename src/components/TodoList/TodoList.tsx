@@ -1,6 +1,13 @@
 // @ts-nocheck
 
-import { Button, Flex, Heading, Text, View } from '@aws-amplify/ui-react';
+import {
+	Button,
+	Flex,
+	Heading,
+	Text,
+	View,
+	Image,
+} from '@aws-amplify/ui-react';
 
 const TodoList = ({ todos, deleteTodo, editTodo, username }) => {
 	return (
@@ -23,6 +30,13 @@ const TodoList = ({ todos, deleteTodo, editTodo, username }) => {
 								{todo.name}
 							</Text>
 							<Text as='span'>{todo.description}</Text>
+							{todo.image && (
+								<Image
+									src={todo.image}
+									alt={`visual aid for ${todo.name}`}
+									style={{ width: 400 }}
+								/>
+							)}
 							<Button
 								variation='link'
 								onClick={() => deleteTodo(todo)}
